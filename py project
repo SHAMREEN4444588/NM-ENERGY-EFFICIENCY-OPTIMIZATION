@@ -1,0 +1,193 @@
+[tool.poetry]
+  authors = ["Paulo V C Medeiros <impaulov@gmail.com>"]
+  description = """\
+    Chat with GPT LLMs over voice, text or both. With access to the internet.\
+    Powered by OpenAI.\
+  """
+  license = "MIT"
+  name = "pyrobbot"
+  readme = "README.md"
+  version = "0.7.7"
+
+[build-system]
+  build-backend = "poetry.core.masonry.api"
+  requires = ["poetry-core"]
+
+[tool.poetry.scripts]
+  rob = "pyrobbot.__main__:main"
+
+[tool.poetry.dependencies]
+  # Python version
+  python = ">=3.9,<3.9.7 || >3.9.7,<3.13"
+  # Deps that should have been openapi deps
+  matplotlib = "^3.8.0"
+  plotly = "^5.18.0"
+  scikit-learn = "^1.3.2"
+  scipy = "^1.11.3"
+  # Other dependencies
+  loguru = "^0.7.2"
+  numpy = "^1.26.1"
+  openai = "^1.13.3"
+  pandas = "^2.2.0"
+  pillow = "^10.2.0"
+  pydantic = "^2.6.1"
+  streamlit = "^1.31.1"
+  tiktoken = "^0.6.0"
+  # Text to speech
+  audio-recorder-streamlit = "^0.0.8"
+  beautifulsoup4 = "^4.12.3"
+  chime = "^0.7.0"
+  duckduckgo-search = "^5.0"
+  gtts = "^2.5.1"
+  httpx = "^0.26.0"
+  ipinfo = "^5.0.1"
+  pydub = "^0.25.1"
+  pygame = "^2.5.2"
+  setuptools = "^68.2.2"              # Needed by webrtcvad-wheels
+  sounddevice = "^0.4.6"
+  soundfile = "^0.12.1"
+  speechrecognition = "^3.10.0"
+  streamlit-mic-recorder = "^0.0.4"
+  streamlit-webrtc = "^0.47.1"
+  twilio = "^9.0.0"
+  tzlocal = "^5.2"
+  unidecode = "^1.3.7"
+  webrtcvad-wheels = "^2.0.11.post1"
+
+[tool.poetry.group.dev.dependencies]
+  ipython = "^8.16.1"
+
+[tool.poetry.group.linting.dependencies]
+  black = "^24.2.0"
+  flakeheaven = "^3.3.0"
+  isort = "^5.13.2"
+  pydoclint = "^0.4.0"
+  ruff = "^0.3.0"
+
+[tool.poetry.group.test.dependencies]
+  pytest = "^8.0.0"
+  pytest-cov = "^4.1.0"
+  pytest-mock = "^3.12.0"
+  pytest-order = "^1.2.0"
+  pytest-xdist = "^3.5.0"
+  python-lorem = "^1.3.0.post1"
+
+  ##################
+  # Linter configs #
+  ##################
+
+[tool.black]
+  line-length = 90
+
+[tool.flakeheaven]
+  base = ".flakeheaven.toml"
+
+[tool.isort]
+  line_length = 90
+  profile = "black"
+
+[tool.ruff]
+  line-length = 90
+
+[tool.ruff.lint]
+  # C901: Function is too complex. Ignoring this for now but will be removed later.
+  ignore = ["C901", "D105", "EXE001", "RET504", "RUF012"]
+  select = [
+    "A",
+    "ARG",
+    "B",
+    "BLE",
+    "C4",
+    "C90",
+    "D",
+    "E",
+    "ERA",
+    "EXE",
+    "F",
+    "G",
+    "I",
+    "N",
+    "PD",
+    "PERF",
+    "PIE",
+    "PL",
+    "PT",
+    "Q",
+    "RET",
+    "RSE",
+    "RUF",
+    "S",
+    "SIM",
+    "SLF",
+    "T20",
+    "W",
+  ]
+
+[tool.ruff.lint.per-file-ignores]
+  # S101: Use of `assert` detected
+  "tests/**/*.py" = [
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "E501",
+    "S101",
+    "SLF001",
+  ]
+
+[tool.ruff.lint.pydocstyle]
+  convention = "google"
+
+  ##################
+  # pytest configs #
+  ##################
+
+[tool.pytest.ini_options]
+  addopts = """\
+      -n auto -v --cache-clear \
+      --failed-first \
+      --cov-reset --cov-report=term-missing:skip-covered \
+       --cov-report=xml:.coverage.xml --cov=./ \
+  """
+  log_cli_level = "INFO"
+  testpaths = ["tests/smoke", "tests/unit"]
+
+[tool.coverage.report]
+  omit = ["**/app/*"]
+
+  ####################################
+  # Leave configs for `poe` separate #
+  ####################################
+
+[tool.poe]
+  poetry_command = "devtools"
+
+[tool.poe.tasks]
+  _black = "black ."
+  _isort = "isort ."
+  _ruff = "ruff check ."
+  # Test-related tasks
+  pytest = "pytest"
+  test = ["pytest"]
+  # Tasks to be run as pre-push checks
+  pre-push-checks = ["lint", "pytest"]
+
+[tool.poe.tasks._flake8]
+  cmd = "flakeheaven lint ."
+  env = {FLAKEHEAVEN_CACHE_TIMEOUT = "0"}
+
+[tool.poe.tasks.lint]
+  args = [{name = "fix", type = "boolean", default = false}]
+  control = {expr = "fix"}
+
+[[tool.poe.tasks.lint.switch]]
+  case = "True"
+  sequence = ["_isort", "_black", "_ruff --fix", "_flake8"]
+
+[[tool.poe.tasks.lint.switch]]
+  case = "False"
+  sequence = ["_isort --check-only", "_black --check --diff", "_ruff", "_flake8"]
